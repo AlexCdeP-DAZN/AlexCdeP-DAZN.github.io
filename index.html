@@ -5,834 +5,840 @@
 <p>I'm hosted with GitHub Pages.</p>
 </body>
 
-<head>
-  <meta charset="UTF-8">
-  <title>Graph Editor</title>
-  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
-  <script src="https://d3js.org/d3.v5.min.js"></script>
-  <script type="text/javascript">
 
-    var node_params;
-    var mynodes = [];
-    var mylinks = [];
+<iframe src="experiments/graph_2021-06-14 11_53_43_751004.html" allowfullscreen="" width="1000" height="700" frameborder="0"></iframe>
+  #document
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Graph Editor</title>
+        <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script type="text/javascript">
 
-
-    let maxDegree = 0;
-    let maxWeigth = 0;
-    let width = 800;
-    let height = 800;
+          var node_params;
+          var mynodes = [];
+          var mylinks = [];
 
 
-    function initialize(initNodes, initNodeParams, initLinks) {
-      mynodes = initNodes;
-      node_params = initNodeParams;
-      mylinks = initLinks;
-
-      if (!1) {
-
-        let rawNodes = [];
-
-        let delta = 0.1;
-        for (i = 0; i < mynodes.length; i++) {
-          let newRawNode = null;
-
-          //fixing correct positions for target nodes
-          if (mynodes[i].type == 'bad_node') {
-            newRawNode = {
-              'index': mynodes[i].index,
-              'name': mynodes[i].name,
-              'type': mynodes[i].type,
-              'degree': mynodes[i].degree,
-              'fx': width * (1 - delta),
-              'fy': height / 2
-            };
-          } else if (mynodes[i].type == 'nice_node') {
-            newRawNode = {
-              'index': mynodes[i].index,
-              'name': mynodes[i].name,
-              'type': mynodes[i].type,
-              'degree': mynodes[i].degree,
-              'fx': width * delta,
-              'fy': height / 2
-            };
-          } else {
-            //for non-target nodes there x-s and y-s will be added after forceSimulation
-            newRawNode = {
-              'index': mynodes[i].index,
-              'name': mynodes[i].name,
-              'type': mynodes[i].type,
-              'degree': mynodes[i].degree
-            };
-          }
-          //needed for normalization later
-          if (mynodes[i].degree > maxDegree) {
-            maxDegree = mynodes[i].degree;
-          }
-
-          rawNodes.push(newRawNode);
-        }
-
-        var layout = d3
-          .forceSimulation(rawNodes)
-          .tick(5)
-          ;
+          let maxDegree = 0;
+          let maxWeigth = 0;
+          let width = 800;
+          let height = 800;
 
 
-        let maxX = 0,
-            maxY = 0,
-            minX = 0,
-            minY = 0;
+          function initialize(initNodes, initNodeParams, initLinks) {
+            mynodes = initNodes;
+            node_params = initNodeParams;
+            mylinks = initLinks;
 
-        for (let i = 0; i < rawNodes.length; i++) {
-          if (rawNodes[i].type == 'suit_node') {
-            if (rawNodes[i].x > maxX) {
-              maxX = rawNodes[i].x;
-            }
-            if (rawNodes[i].x < minX) {
-              minX = rawNodes[i].x;
-            }
-            if (rawNodes[i].y > maxY) {
-              maxY = rawNodes[i].y;
-            }
-            if (rawNodes[i].y < minY) {
-              minY = rawNodes[i].y;
-            }
-          }
-        }
+            if (!1) {
 
-        let offsetMaxX = -minX + maxX;
-        let offsetMaxY = -minY + maxY;
+              let rawNodes = [];
 
-        //Coordinates now have some unpredicted values. I set them so they fill my viewbox with some padding from borders.
-        //At first I normalize them, then multiply by width and height.
+              let delta = 0.1;
+              for (i = 0; i < mynodes.length; i++) {
+                let newRawNode = null;
 
-        for (let i = 0; i < rawNodes.length; i++) {
-
-          if (rawNodes[i].type == 'suit_node') {
-            //x, y >= 0
-            rawNodes[i].x += -minX;
-            rawNodes[i].y += -minY;
-
-            //x, y from [0, 1 - 2 * delta]
-            rawNodes[i].x = rawNodes[i].x / offsetMaxX * (1 - 2 * delta);
-            rawNodes[i].y = rawNodes[i].y / offsetMaxY * (1 - 2 * delta);
-
-            //x, y from [delta, 1 - delta]
-            rawNodes[i].x += delta;
-            rawNodes[i].y += delta;
-
-            //x, y from [(width | height) * delta, (width | height) * (1 - delta)]
-
-            rawNodes[i].x *= width;
-            rawNodes[i].y *= height;
-
-          }
-
-        }
-
-        for (let i = 0; i < mynodes.length; i++) {
-          mynodes[i].x = rawNodes[i].x;
-          mynodes[i].y = rawNodes[i].y;
-        }
-
-        for (let i = 0; i < mylinks.length;  i++) {
-          mylinks[i].source.x = rawNodes[mylinks[i].source.index].x;
-          mylinks[i].source.y = rawNodes[mylinks[i].source.index].y;
-          mylinks[i].target.x = rawNodes[mylinks[i].target.index].x;
-          mylinks[i].target.y = rawNodes[mylinks[i].target.index].y;
-          if (mylinks[i].weight > maxWeigth) {
-            maxWeigth = mylinks[i].weight;
-          }
-        }
-      } else {
-        // if layout_dump was used:
-        for (i = 0; i < mynodes.length; i++) {
-          if (mynodes[i].degree > maxDegree) {
-            maxDegree = mynodes[i].degree;
-          }
-        }
-        for (let i = 0; i < mylinks.length;  i++) {
-          if (mylinks[i].weight > maxWeigth) {
-            maxWeigth = mylinks[i].weight;
-          }
-        }
-      }
-
-
-
-
-      makeCheckboxes();
-      setLinkThreshold();
-      displayingWeights();
-    }
-
-    function drawGraph(nodes, links) {
-      zoom = d3.zoom()
-          .scaleExtent([0.5, 8])
-          .translateExtent([[0, 0], [width, height]])
-          .extent([[0, 0], [width, height]])
-          .on("zoom", zoomed)
-          ;
-
-      var svg = d3.select("#freakingGraph").append("svg")
-        .attr("viewBox", [0, 0, width, height])
-        .call(zoom)
-        ;
-
-      //I append all elemets to maingroup so zoom works properly
-      var maingroup = svg.append('g');
-
-      function zoomed() {
-        maingroup.attr("transform", d3.event.transform);
-      }
-
-
-      function calcMarkers(d) {
-
-          let dist = Math.sqrt((nodes[whereEquals(d.target.index)].x - nodes[whereEquals(d.source.index)].x) ** 2 + (nodes[whereEquals(d.target.index)].y - nodes[whereEquals(d.source.index)].y) ** 2);
-          if (dist > 0 && dist <= 200){
-              return - Math.sqrt((0.5 - (d.target.degree ) / 2 / dist)) * (d.target.degree) / 2;
-
-          } else {
-              return 0;
-          }
-      }
-
-      var path = maingroup.append("g").selectAll("path")
-          .data(links)
-          .enter()
-          .append("path")
-          .attr("class", function(d) { return "link " + d.type; })
-          .attr("stroke-width", function(d) { return Math.max(d.weight * 20, 1); })
-          .attr("id", function(d,i) { return "link_"+i; })
-          .attr("d", linkArc)
-          ;
-
-      let textMarkersSelection = maingroup.append("g").selectAll("text")
-          .data(links)
-          .enter();
-
-      textMarkersSelection.append("text")
-          .style("font-size", "13px")
-          .attr("dy", "4.2px")
-          .append("textPath")
-          .attr("xlink:href", function(d,i) { return "#link_"+i; })
-          .attr("startOffset", "35%")
-          .text("➤")
-          ;
-
-      textMarkersSelection.append("text")
-          .style("font-size", "13px")
-          .attr("dy", "4.2px")
-          .append("textPath")
-          .attr("xlink:href", function(d,i) { return "#link_"+i; })
-          .attr("startOffset", "65%")
-          .text("➤")
-          ;
-
-      var edgetext = maingroup.append("g").selectAll("text")
-          .data(links)
-          .enter().append("text")
-          .append("textPath")
-          .attr("xlink:href",function(d,i){return "#link_"+i;})
-          .style("text-anchor","middle")
-          .attr("startOffset", "50%")
-          .attr("id", function(d,i) { return "node_text"+i; })
-          ;
-
-      function whereEquals(index) {
-        for (var i = 0; i < nodes.length; i++) {
-          if (index == nodes[i].index) {
-            return i;
-          }
-        }
-      }
-
-
-        function roundToSignificantFigures(num, n) {
-            if(num == 0) {
-                return 0;
-            }
-
-            d = Math.ceil(Math.log10(num < 0 ? -num: num));
-            power = n - d;
-
-            magnitude = Math.pow(10, power);
-            shifted = Math.round(num*magnitude);
-            return shifted/magnitude;
-        };
-
-
-
-      function displayingWeights() {
-        d3.selectAll("#show-weights").each(function(d) {
-          cb = d3.select(this);
-          if (cb.property("checked")) {
-            edgetext = edgetext.text(function(d) {
-                if ($('#show-percents')[0].checked) {
-                    if (d['weight_text'] > 1) {
-                      return d['weight_text']
-                    } else {
-                      return roundToSignificantFigures(d['weight_text'] * 100, 2) + "%";
-                    };
+                //fixing correct positions for target nodes
+                if (mynodes[i].type == 'bad_node') {
+                  newRawNode = {
+                    'index': mynodes[i].index,
+                    'name': mynodes[i].name,
+                    'type': mynodes[i].type,
+                    'degree': mynodes[i].degree,
+                    'fx': width * (1 - delta),
+                    'fy': height / 2
+                  };
+                } else if (mynodes[i].type == 'nice_node') {
+                  newRawNode = {
+                    'index': mynodes[i].index,
+                    'name': mynodes[i].name,
+                    'type': mynodes[i].type,
+                    'degree': mynodes[i].degree,
+                    'fx': width * delta,
+                    'fy': height / 2
+                  };
                 } else {
-                    if (d['weight_text'] > 1) {
-                      return d['weight_text']
-                    } else {
-                      return roundToSignificantFigures(d['weight_text'], 2);
-                    };
+                  //for non-target nodes there x-s and y-s will be added after forceSimulation
+                  newRawNode = {
+                    'index': mynodes[i].index,
+                    'name': mynodes[i].name,
+                    'type': mynodes[i].type,
+                    'degree': mynodes[i].degree
+                  };
                 }
-            })
-          } else {
-            edgetext = edgetext.text(function(d) { return ; })
-          }
+                //needed for normalization later
+                if (mynodes[i].degree > maxDegree) {
+                  maxDegree = mynodes[i].degree;
+                }
+
+                rawNodes.push(newRawNode);
+              }
+
+              var layout = d3
+                .forceSimulation(rawNodes)
+                .tick(5)
+                ;
 
 
-        })
-      };
+              let maxX = 0,
+                  maxY = 0,
+                  minX = 0,
+                  minY = 0;
 
+              for (let i = 0; i < rawNodes.length; i++) {
+                if (rawNodes[i].type == 'suit_node') {
+                  if (rawNodes[i].x > maxX) {
+                    maxX = rawNodes[i].x;
+                  }
+                  if (rawNodes[i].x < minX) {
+                    minX = rawNodes[i].x;
+                  }
+                  if (rawNodes[i].y > maxY) {
+                    maxY = rawNodes[i].y;
+                  }
+                  if (rawNodes[i].y < minY) {
+                    minY = rawNodes[i].y;
+                  }
+                }
+              }
 
+              let offsetMaxX = -minX + maxX;
+              let offsetMaxY = -minY + maxY;
 
-        d3.selectAll("#show-weights").on("change", displayingWeights);
-        d3.selectAll("#show-percents").on("change", displayingWeights);
+              //Coordinates now have some unpredicted values. I set them so they fill my viewbox with some padding from borders.
+              //At first I normalize them, then multiply by width and height.
 
-        function dragstarted(d) {
-          d3.select(this).raise().classed("active", true);
-        }
+              for (let i = 0; i < rawNodes.length; i++) {
 
-        function dragged(d) {
-          d3.select(this)
-          .attr("cx", d.x = d3.event.x)
-          .attr("cy", d.y = d3.event.y);
-        }
+                if (rawNodes[i].type == 'suit_node') {
+                  //x, y >= 0
+                  rawNodes[i].x += -minX;
+                  rawNodes[i].y += -minY;
 
-        function dragended(d) {
+                  //x, y from [0, 1 - 2 * delta]
+                  rawNodes[i].x = rawNodes[i].x / offsetMaxX * (1 - 2 * delta);
+                  rawNodes[i].y = rawNodes[i].y / offsetMaxY * (1 - 2 * delta);
 
-          d3.select(this).classed("active", false);
-          path = path.attr("d", linkArc);
+                  //x, y from [delta, 1 - delta]
+                  rawNodes[i].x += delta;
+                  rawNodes[i].y += delta;
 
-          text = text
-            .attr('x', function(d) { return d.x; })
-            .attr('y', function(d) { return d.y; })
-            ;
-          defs.attr("refY", function(d) { return calcMarkers(d); });
-          defs.append("path")
-            .attr("d", "M0,-5L10,0L0,5");
-        };
+                  //x, y from [(width | height) * delta, (width | height) * (1 - delta)]
 
-        var circle = maingroup.append("g").selectAll("circle")
-            .data(nodes)
-            .enter().append("circle")
-            .attr("class", function(d) { return "circle " + d.type; })
-            .attr("r", function(d) { return d.degree; })
-            .attr('cx', function(d) { return d.x; })
-            .attr('cy', function(d) { return d.y; })
-            .style("cursor", "default")
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
+                  rawNodes[i].x *= width;
+                  rawNodes[i].y *= height;
 
+                }
 
-        var text = maingroup.append("g").selectAll("text")
-          .data(nodes)
-          .enter().append("text")
-          .attr('x', function(d) { return d.x; })
-          .attr('y', function(d) { return d.y; })
-          .attr('id', function(d) { return "node-name" + d.index })
-          .attr('class', 'node-name')
-          .text(function(d) { return d.name; })
-          ;
+              }
 
-        function linkArc(d) {
-          var dx = nodes[whereEquals(d.target.index)].x - nodes[whereEquals(d.source.index)].x,
-              dy = nodes[whereEquals(d.target.index)].y - nodes[whereEquals(d.source.index)].y,
-              dr = dx * dx + dy * dy;
-              dr = Math.sqrt(dr);
-            if (dr > 200) {
-              dr *= 5
+              for (let i = 0; i < mynodes.length; i++) {
+                mynodes[i].x = rawNodes[i].x;
+                mynodes[i].y = rawNodes[i].y;
+              }
+
+              for (let i = 0; i < mylinks.length;  i++) {
+                mylinks[i].source.x = rawNodes[mylinks[i].source.index].x;
+                mylinks[i].source.y = rawNodes[mylinks[i].source.index].y;
+                mylinks[i].target.x = rawNodes[mylinks[i].target.index].x;
+                mylinks[i].target.y = rawNodes[mylinks[i].target.index].y;
+                if (mylinks[i].weight > maxWeigth) {
+                  maxWeigth = mylinks[i].weight;
+                }
+              }
             } else {
-              dr /= 2
+              // if layout_dump was used:
+              for (i = 0; i < mynodes.length; i++) {
+                if (mynodes[i].degree > maxDegree) {
+                  maxDegree = mynodes[i].degree;
+                }
+              }
+              for (let i = 0; i < mylinks.length;  i++) {
+                if (mylinks[i].weight > maxWeigth) {
+                  maxWeigth = mylinks[i].weight;
+                }
+              }
+            }
+
+
+
+
+            makeCheckboxes();
+            setLinkThreshold();
+            displayingWeights();
+          }
+
+          function drawGraph(nodes, links) {
+            zoom = d3.zoom()
+                .scaleExtent([0.5, 8])
+                .translateExtent([[0, 0], [width, height]])
+                .extent([[0, 0], [width, height]])
+                .on("zoom", zoomed)
+                ;
+
+            var svg = d3.select("#freakingGraph").append("svg")
+              .attr("viewBox", [0, 0, width, height])
+              .call(zoom)
+              ;
+
+            //I append all elemets to maingroup so zoom works properly
+            var maingroup = svg.append('g');
+
+            function zoomed() {
+              maingroup.attr("transform", d3.event.transform);
+            }
+
+
+            function calcMarkers(d) {
+
+                let dist = Math.sqrt((nodes[whereEquals(d.target.index)].x - nodes[whereEquals(d.source.index)].x) ** 2 + (nodes[whereEquals(d.target.index)].y - nodes[whereEquals(d.source.index)].y) ** 2);
+                if (dist > 0 && dist <= 200){
+                    return - Math.sqrt((0.5 - (d.target.degree ) / 2 / dist)) * (d.target.degree) / 2;
+
+                } else {
+                    return 0;
+                }
+            }
+
+            var path = maingroup.append("g").selectAll("path")
+                .data(links)
+                .enter()
+                .append("path")
+                .attr("class", function(d) { return "link " + d.type; })
+                .attr("stroke-width", function(d) { return Math.max(d.weight * 20, 1); })
+                .attr("id", function(d,i) { return "link_"+i; })
+                .attr("d", linkArc)
+                ;
+
+            let textMarkersSelection = maingroup.append("g").selectAll("text")
+                .data(links)
+                .enter();
+
+            textMarkersSelection.append("text")
+                .style("font-size", "13px")
+                .attr("dy", "4.2px")
+                .append("textPath")
+                .attr("xlink:href", function(d,i) { return "#link_"+i; })
+                .attr("startOffset", "35%")
+                .text("➤")
+                ;
+
+            textMarkersSelection.append("text")
+                .style("font-size", "13px")
+                .attr("dy", "4.2px")
+                .append("textPath")
+                .attr("xlink:href", function(d,i) { return "#link_"+i; })
+                .attr("startOffset", "65%")
+                .text("➤")
+                ;
+
+            var edgetext = maingroup.append("g").selectAll("text")
+                .data(links)
+                .enter().append("text")
+                .append("textPath")
+                .attr("xlink:href",function(d,i){return "#link_"+i;})
+                .style("text-anchor","middle")
+                .attr("startOffset", "50%")
+                .attr("id", function(d,i) { return "node_text"+i; })
+                ;
+
+            function whereEquals(index) {
+              for (var i = 0; i < nodes.length; i++) {
+                if (index == nodes[i].index) {
+                  return i;
+                }
+              }
+            }
+
+
+              function roundToSignificantFigures(num, n) {
+                  if(num == 0) {
+                      return 0;
+                  }
+
+                  d = Math.ceil(Math.log10(num < 0 ? -num: num));
+                  power = n - d;
+
+                  magnitude = Math.pow(10, power);
+                  shifted = Math.round(num*magnitude);
+                  return shifted/magnitude;
+              };
+
+
+
+            function displayingWeights() {
+              d3.selectAll("#show-weights").each(function(d) {
+                cb = d3.select(this);
+                if (cb.property("checked")) {
+                  edgetext = edgetext.text(function(d) {
+                      if ($('#show-percents')[0].checked) {
+                          if (d['weight_text'] > 1) {
+                            return d['weight_text']
+                          } else {
+                            return roundToSignificantFigures(d['weight_text'] * 100, 2) + "%";
+                          };
+                      } else {
+                          if (d['weight_text'] > 1) {
+                            return d['weight_text']
+                          } else {
+                            return roundToSignificantFigures(d['weight_text'], 2);
+                          };
+                      }
+                  })
+                } else {
+                  edgetext = edgetext.text(function(d) { return ; })
+                }
+
+
+              })
             };
-            if (dr > 0) {
-              return "M" + nodes[whereEquals(d.source.index)].x + "," + nodes[whereEquals(d.source.index)].y + "A" + (dr * 1.1) + "," + (dr * 1.1) + " 0 0,1 " + nodes[whereEquals(d.target.index)].x + "," + nodes[whereEquals(d.target.index)].y;
-            }
-            else {
-              minRadius = 24;
-              radius = Math.max(minRadius, nodes[whereEquals(d.source.index)].degree);
-              return "M" + nodes[whereEquals(d.source.index)].x + "," + nodes[whereEquals(d.source.index)].y + "A" + radius + "," + radius + " 0 1,0 " + (nodes[whereEquals(d.target.index)].x + 0.1) + "," + (nodes[whereEquals(d.target.index)].y + 0.1);
-            }
-        }
-
-        //synch with 'show names' and 'show weights' checkboxes
-        displayingWeights();
-        changeNamesVisibility(document.getElementById("show-names").checked)
-    }
 
 
 
-    function changeLabel(curinput) {
-      document.getElementById('label' + curinput.id.substring(4)).innerHTML = curinput.value;
-      mynodes[whereEquals1(curinput.id.substring(4))].name = curinput.value;
-      $(curinput).attr('size', curinput.value.length + 2)
-    };
+              d3.selectAll("#show-weights").on("change", displayingWeights);
+              d3.selectAll("#show-percents").on("change", displayingWeights);
 
-    function whereEquals1(index) {
-      for (var i = 0; i < mynodes.length; i++) {
-        if (index == mynodes[i].index) {
-          return i;
-        }
-      }
-    }
+              function dragstarted(d) {
+                d3.select(this).raise().classed("active", true);
+              }
 
-    function makeCheckboxes() {
+              function dragged(d) {
+                d3.select(this)
+                .attr("cx", d.x = d3.event.x)
+                .attr("cy", d.y = d3.event.y);
+              }
 
-      for (var i = 0; i < mynodes.length; i++) {
+              function dragended(d) {
 
-        var newDiv = document.createElement('div');
-        newDiv.id = '#checkdiv' + mynodes[i].index;
-        $( '#check-boxes' ).append(newDiv);
+                d3.select(this).classed("active", false);
+                path = path.attr("d", linkArc);
 
-        var newCheckbox = document.createElement('input');
-        newCheckbox.type = 'checkbox';
-        newCheckbox.id = 'checkbox' + mynodes[i].index;
-        newCheckbox.checked = true;
-        newCheckbox.className = 'checkbox-class node-checkbox';
-        $( newDiv ).append(newCheckbox);
+                text = text
+                  .attr('x', function(d) { return d.x; })
+                  .attr('y', function(d) { return d.y; })
+                  ;
+                defs.attr("refY", function(d) { return calcMarkers(d); });
+                defs.append("path")
+                  .attr("d", "M0,-5L10,0L0,5");
+              };
 
-        var newNameInput = document.createElement('input');
-        newNameInput.id = 'name-input' + mynodes[i].index;
-        newNameInput.type = 'text';
-        newNameInput.value = mynodes[i].name;
-        $( newNameInput ).attr('size', newNameInput.value.length + 3);
-
-        $( newDiv ).append(newNameInput);
-        $( newNameInput ).on('keypress', updateName);
-
-      }
-    }
-
-    function updateName() {
-
-      document.getElementById('node-name' + this.id.substring(10)).innerHTML = this.value;
-      mynodes[this.id.substring(10)].name = this.value;
-      this.size = this.value.length + 3;
-
-    }
-
-    function getCorrectLinks(newIdx) {
-      var newLinks = [];
-      for (var i = 0; i < mylinks.length; i++) {
-        if (newIdx.includes(mylinks[i].source.index) && newIdx.includes(mylinks[i].target.index)) {
-          newLinks.push(mylinks[i]);
-        }
-      }
-      return newLinks;
-    }
-    function clearSVG() {
-      $( 'svg' ).remove();
-      $( '.node-edit' ).each(function() {
-        this.remove();
-      });
-    }
-    function changeNodes() {
-      var newNodes = [];
-      var newIdx = [];
-
-      $( '.node-checkbox' ).each(function(i, obj) {
-
-        if (this.checked) {
-          newNodes.push(mynodes[i]);
-          newIdx.push(mynodes[i].index);
-        }
-
-      });
-
-      var newLinks = getCorrectLinks(newIdx)
+              var circle = maingroup.append("g").selectAll("circle")
+                  .data(nodes)
+                  .enter().append("circle")
+                  .attr("class", function(d) { return "circle " + d.type; })
+                  .attr("r", function(d) { return d.degree; })
+                  .attr('cx', function(d) { return d.x; })
+                  .attr('cy', function(d) { return d.y; })
+                  .style("cursor", "default")
+                  .call(d3.drag()
+                      .on("start", dragstarted)
+                      .on("drag", dragged)
+                      .on("end", dragended));
 
 
-      clearSVG();
-      drawGraph(newNodes, newLinks);
-    }
+              var text = maingroup.append("g").selectAll("text")
+                .data(nodes)
+                .enter().append("text")
+                .attr('x', function(d) { return d.x; })
+                .attr('y', function(d) { return d.y; })
+                .attr('id', function(d) { return "node-name" + d.index })
+                .attr('class', 'node-name')
+                .text(function(d) { return d.name; })
+                ;
 
-    function setLinkThreshold () {
-      let idxInLinks = new Array(mynodes.length).fill(false);
-      let newLinks = [];
+              function linkArc(d) {
+                var dx = nodes[whereEquals(d.target.index)].x - nodes[whereEquals(d.source.index)].x,
+                    dy = nodes[whereEquals(d.target.index)].y - nodes[whereEquals(d.source.index)].y,
+                    dr = dx * dx + dy * dy;
+                    dr = Math.sqrt(dr);
+                  if (dr > 200) {
+                    dr *= 5
+                  } else {
+                    dr /= 2
+                  };
+                  if (dr > 0) {
+                    return "M" + nodes[whereEquals(d.source.index)].x + "," + nodes[whereEquals(d.source.index)].y + "A" + (dr * 1.1) + "," + (dr * 1.1) + " 0 0,1 " + nodes[whereEquals(d.target.index)].x + "," + nodes[whereEquals(d.target.index)].y;
+                  }
+                  else {
+                    minRadius = 24;
+                    radius = Math.max(minRadius, nodes[whereEquals(d.source.index)].degree);
+                    return "M" + nodes[whereEquals(d.source.index)].x + "," + nodes[whereEquals(d.source.index)].y + "A" + radius + "," + radius + " 0 1,0 " + (nodes[whereEquals(d.target.index)].x + 0.1) + "," + (nodes[whereEquals(d.target.index)].y + 0.1);
+                  }
+              }
 
-      let thresholdValue = $('#threshold-link-range').val();
-      let blockDeleteTargets = $('#block-targets')[0].checked;
-
-      for (let i = 0; i < mylinks.length; i++) {
-        if (mylinks[i].target.type == 'nice_node' || mylinks[i].source.type == 'nice_node' || mylinks[i].target.type == 'bad_node' || mylinks[i].source.type == 'bad_node') {
-          if (blockDeleteTargets) {
-
-            newLinks.push(mylinks[i]);
-            idxInLinks[mylinks[i].target.index] = true;
-            idxInLinks[mylinks[i].source.index] = true;
-          } else if (mylinks[i].weight * maxWeigth >= thresholdValue) {
-            newLinks.push(mylinks[i]);
-            idxInLinks[mylinks[i].target.index] = true;
-            idxInLinks[mylinks[i].source.index] = true;
+              //synch with 'show names' and 'show weights' checkboxes
+              displayingWeights();
+              changeNamesVisibility(document.getElementById("show-names").checked)
           }
-        } else if (mylinks[i].weight * maxWeigth >= thresholdValue) {
-          newLinks.push(mylinks[i]);
-          idxInLinks[mylinks[i].target.index] = true;
-          idxInLinks[mylinks[i].source.index] = true;
-        }
-      }
 
-      let newNodes = [];
-      for (let i = 0; i < mynodes.length; i++) {
-        if (idxInLinks[i]) {
-          newNodes.push(mynodes[i]);
-          $('#checkbox' + mynodes[i].index).prop('checked', true);
-        } else {
-          $('#checkbox' + mynodes[i].index).prop('checked', false);
-        }
-      }
-      clearSVG();
-      drawGraph(newNodes, newLinks);
-    }
 
-    function updateLinkThresholdText(val) {
-      document.getElementById('threshold-link-text').innerHTML = val;
-    }
 
-    function setNodeThreshold() {
-      var newNodes = [];
-      var newIdx = [];
+          function changeLabel(curinput) {
+            document.getElementById('label' + curinput.id.substring(4)).innerHTML = curinput.value;
+            mynodes[whereEquals1(curinput.id.substring(4))].name = curinput.value;
+            $(curinput).attr('size', curinput.value.length + 2)
+          };
 
-      let thresholdValue = $('#threshold-node-range').val();
-      let blockDeleteTargets = $('#block-targets')[0].checked;
-
-      for (let i = 0; i < mynodes.length; i++) {
-        if (mynodes[i].type == 'bad_node' || mynodes[i].type == 'nice_node') {
-          if (blockDeleteTargets) {
-            newNodes.push(mynodes[i]);
-            newIdx.push(mynodes[i].index);
-            $('#checkbox' + mynodes[i].index).prop('checked', true);
-          } else if (mynodes[i].degree >= $('#threshold-node-range').val() * maxDegree) {
-            newNodes.push(mynodes[i]);
-            newIdx.push(mynodes[i].index);
-            $('#checkbox' + mynodes[i].index).prop('checked', true);
-          } else {
-            $('#checkbox' + mynodes[i].index).prop('checked', false);
+          function whereEquals1(index) {
+            for (var i = 0; i < mynodes.length; i++) {
+              if (index == mynodes[i].index) {
+                return i;
+              }
+            }
           }
-        } else if (mynodes[i].degree >= $('#threshold-node-range').val() * maxDegree) {
-          newNodes.push(mynodes[i]);
-          newIdx.push(mynodes[i].index);
-          $('#checkbox' + mynodes[i].index).prop('checked', true);
-        } else {
-          $('#checkbox' + mynodes[i].index).prop('checked', false);
-        }
-      }
-      var newLinks = getCorrectLinks(newIdx);
 
-      clearSVG();
-      drawGraph(newNodes, newLinks);
-    }
+          function makeCheckboxes() {
 
-    function updateNodeThresholdText(val) {
-      document.getElementById('threshold-node-text').innerHTML = val;
-    }
+            for (var i = 0; i < mynodes.length; i++) {
 
+              var newDiv = document.createElement('div');
+              newDiv.id = '#checkdiv' + mynodes[i].index;
+              $( '#check-boxes' ).append(newDiv);
 
-    function changeNamesVisibility(isHidden) {
+              var newCheckbox = document.createElement('input');
+              newCheckbox.type = 'checkbox';
+              newCheckbox.id = 'checkbox' + mynodes[i].index;
+              newCheckbox.checked = true;
+              newCheckbox.className = 'checkbox-class node-checkbox';
+              $( newDiv ).append(newCheckbox);
 
-      if (isHidden) {
-        $('.node-name').each(
-          function() {
-            $(this).show();
-          });
-      } else {
-        $('.node-name').each(
-          function() {
-            $(this).hide();
-          });
-      }
-    }
+              var newNameInput = document.createElement('input');
+              newNameInput.id = 'name-input' + mynodes[i].index;
+              newNameInput.type = 'text';
+              newNameInput.value = mynodes[i].name;
+              $( newNameInput ).attr('size', newNameInput.value.length + 3);
 
-    function downloadLayout() {
-        var a = document.createElement("a");
-        var file = new Blob([JSON.stringify(mynodes)], {type: "text/json;charset=utf-8"});
-        a.href = URL.createObjectURL(file);
-        a.download = "node_params.json";
-        console.log(1);
-        a.click();
+              $( newDiv ).append(newNameInput);
+              $( newNameInput ).on('keypress', updateName);
 
-    }
+            }
+          }
 
-  </script>
+          function updateName() {
 
-  <style type="text/css">
-      watermark {
-        width: 100%;
-      }
-      watermark h3 {
-        width: 100%;
-        text-align: center;
-      }
-      html {
-        font-size: 10px;
-      }
+            document.getElementById('node-name' + this.id.substring(10)).innerHTML = this.value;
+            mynodes[this.id.substring(10)].name = this.value;
+            this.size = this.value.length + 3;
 
-      circle {
-        fill: #ccc;
-        stroke: #333;
-        stroke-width: 1.5px;
-      }
+          }
 
-      .circle.source_node {
-        fill: #f3f310;
-      }
+          function getCorrectLinks(newIdx) {
+            var newLinks = [];
+            for (var i = 0; i < mylinks.length; i++) {
+              if (newIdx.includes(mylinks[i].source.index) && newIdx.includes(mylinks[i].target.index)) {
+                newLinks.push(mylinks[i]);
+              }
+            }
+            return newLinks;
+          }
+          function clearSVG() {
+            $( 'svg' ).remove();
+            $( '.node-edit' ).each(function() {
+              this.remove();
+            });
+          }
+          function changeNodes() {
+            var newNodes = [];
+            var newIdx = [];
 
-      .circle.nice_node {
-        fill: green;
-      }
+            $( '.node-checkbox' ).each(function(i, obj) {
 
-      .circle.bad_node {
-        fill: red;
-      }
+              if (this.checked) {
+                newNodes.push(mynodes[i]);
+                newIdx.push(mynodes[i].index);
+              }
 
-      .link {
-        fill: none;
-        stroke: #666;
-        stroke-opacity: 0.7;
-      }
+            });
 
-      #nice_target {
-        fill: green;
-      }
-
-      .link.nice_target {
-        stroke: green;
-      }
-
-      #source {
-        fill: yellow;
-      }
-
-      .link.source {
-        stroke: #f3f310;
-      }
-
-      .link.positive {
-        stroke: green;
-      }
-
-      .link.negative {
-        stroke: red;
-      }
-
-      #source {
-        fill: orange;
-      }
-
-      .link.source1 {
-        stroke: orange;
-      }
-
-      #bad_target {
-        fill: red;
-      }
-
-      .link.bad_target {
-        stroke: red;
-      }
-      text {
-        font: 12px sans-serif;
-        pointer-events: none;
-      }
-
-      main li {
-        display: inline;
-      }
-      .graphlist {
-        list-style-type: none;
-
-      }
-      .graphloader {
-        margin-top: 5%;
-        margin-bottom: 5%;
-      }
-      .graphloader input {
-        margin: auto;
-      }
-
-      h1 {
-        text-align: center;
-      }
-
-      .bottom-checkbox {
-        margin-right: 5%;
-        display: inline;
-      }
-
-      .checkbox-class {
-        margin-right: 3px;
-      }
-
-      .node-edit {
-        position: relative;
-        font-size: 12px;
-        border: none;
-        background-color: rgba(1,1,1,0);
-      }
-
-      .node-edit:focus {
-        background-color: #ddd;
-      }
-
-      #option {
-        margin-left: 5px;
-      }
-
-      #freakingGraph {
-        border: solid 2px black;
-        /*position: relative;*/
-      }
-
-      .container {
-        margin: 0!important;
-        padding-right: 0!important;
-        max-width: 1200px!important;
-      }
-      .col-8 {
-        padding: 0px 4px 0px 2px!important;
-      }
-      .col-4 {
-        padding-right: 0px!important;
-      }
-      @media (max-width: 576px) {
-        form label {
-          font-size: 10px;
-        }
-      }
+            var newLinks = getCorrectLinks(newIdx)
 
 
-      @media (max-width: 768px) {
-        form label {
-          font-size: 0.8rem;
-        }
-      }
+            clearSVG();
+            drawGraph(newNodes, newLinks);
+          }
+
+          function setLinkThreshold () {
+            let idxInLinks = new Array(mynodes.length).fill(false);
+            let newLinks = [];
+
+            let thresholdValue = $('#threshold-link-range').val();
+            let blockDeleteTargets = $('#block-targets')[0].checked;
+
+            for (let i = 0; i < mylinks.length; i++) {
+              if (mylinks[i].target.type == 'nice_node' || mylinks[i].source.type == 'nice_node' || mylinks[i].target.type == 'bad_node' || mylinks[i].source.type == 'bad_node') {
+                if (blockDeleteTargets) {
+
+                  newLinks.push(mylinks[i]);
+                  idxInLinks[mylinks[i].target.index] = true;
+                  idxInLinks[mylinks[i].source.index] = true;
+                } else if (mylinks[i].weight * maxWeigth >= thresholdValue) {
+                  newLinks.push(mylinks[i]);
+                  idxInLinks[mylinks[i].target.index] = true;
+                  idxInLinks[mylinks[i].source.index] = true;
+                }
+              } else if (mylinks[i].weight * maxWeigth >= thresholdValue) {
+                newLinks.push(mylinks[i]);
+                idxInLinks[mylinks[i].target.index] = true;
+                idxInLinks[mylinks[i].source.index] = true;
+              }
+            }
+
+            let newNodes = [];
+            for (let i = 0; i < mynodes.length; i++) {
+              if (idxInLinks[i]) {
+                newNodes.push(mynodes[i]);
+                $('#checkbox' + mynodes[i].index).prop('checked', true);
+              } else {
+                $('#checkbox' + mynodes[i].index).prop('checked', false);
+              }
+            }
+            clearSVG();
+            drawGraph(newNodes, newLinks);
+          }
+
+          function updateLinkThresholdText(val) {
+            document.getElementById('threshold-link-text').innerHTML = val;
+          }
+
+          function setNodeThreshold() {
+            var newNodes = [];
+            var newIdx = [];
+
+            let thresholdValue = $('#threshold-node-range').val();
+            let blockDeleteTargets = $('#block-targets')[0].checked;
+
+            for (let i = 0; i < mynodes.length; i++) {
+              if (mynodes[i].type == 'bad_node' || mynodes[i].type == 'nice_node') {
+                if (blockDeleteTargets) {
+                  newNodes.push(mynodes[i]);
+                  newIdx.push(mynodes[i].index);
+                  $('#checkbox' + mynodes[i].index).prop('checked', true);
+                } else if (mynodes[i].degree >= $('#threshold-node-range').val() * maxDegree) {
+                  newNodes.push(mynodes[i]);
+                  newIdx.push(mynodes[i].index);
+                  $('#checkbox' + mynodes[i].index).prop('checked', true);
+                } else {
+                  $('#checkbox' + mynodes[i].index).prop('checked', false);
+                }
+              } else if (mynodes[i].degree >= $('#threshold-node-range').val() * maxDegree) {
+                newNodes.push(mynodes[i]);
+                newIdx.push(mynodes[i].index);
+                $('#checkbox' + mynodes[i].index).prop('checked', true);
+              } else {
+                $('#checkbox' + mynodes[i].index).prop('checked', false);
+              }
+            }
+            var newLinks = getCorrectLinks(newIdx);
+
+            clearSVG();
+            drawGraph(newNodes, newLinks);
+          }
+
+          function updateNodeThresholdText(val) {
+            document.getElementById('threshold-node-text').innerHTML = val;
+          }
 
 
-      @media (max-width: 992px) {
-        form label {
-          font-size: 1rem;
-        }
-      }
+          function changeNamesVisibility(isHidden) {
 
-      @media (max-width: 1200px) {
-        form label {
-          font-size: 1rem;
-        }
-      }
+            if (isHidden) {
+              $('.node-name').each(
+                function() {
+                  $(this).show();
+                });
+            } else {
+              $('.node-name').each(
+                function() {
+                  $(this).hide();
+                });
+            }
+          }
 
-      @media (min-width: 1201px) {
-        form label {
-          font-size: 1.4rem;
-        }
-      }
+          function downloadLayout() {
+              var a = document.createElement("a");
+              var file = new Blob([JSON.stringify(mynodes)], {type: "text/json;charset=utf-8"});
+              a.href = URL.createObjectURL(file);
+              a.download = "node_params.json";
+              console.log(1);
+              a.click();
 
-  </style>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-</head>
-<body>
+          }
+
+        </script>
+
+        <style type="text/css">
+            watermark {
+              width: 100%;
+            }
+            watermark h3 {
+              width: 100%;
+              text-align: center;
+            }
+            html {
+              font-size: 10px;
+            }
+
+            circle {
+              fill: #ccc;
+              stroke: #333;
+              stroke-width: 1.5px;
+            }
+
+            .circle.source_node {
+              fill: #f3f310;
+            }
+
+            .circle.nice_node {
+              fill: green;
+            }
+
+            .circle.bad_node {
+              fill: red;
+            }
+
+            .link {
+              fill: none;
+              stroke: #666;
+              stroke-opacity: 0.7;
+            }
+
+            #nice_target {
+              fill: green;
+            }
+
+            .link.nice_target {
+              stroke: green;
+            }
+
+            #source {
+              fill: yellow;
+            }
+
+            .link.source {
+              stroke: #f3f310;
+            }
+
+            .link.positive {
+              stroke: green;
+            }
+
+            .link.negative {
+              stroke: red;
+            }
+
+            #source {
+              fill: orange;
+            }
+
+            .link.source1 {
+              stroke: orange;
+            }
+
+            #bad_target {
+              fill: red;
+            }
+
+            .link.bad_target {
+              stroke: red;
+            }
+            text {
+              font: 12px sans-serif;
+              pointer-events: none;
+            }
+
+            main li {
+              display: inline;
+            }
+            .graphlist {
+              list-style-type: none;
+
+            }
+            .graphloader {
+              margin-top: 5%;
+              margin-bottom: 5%;
+            }
+            .graphloader input {
+              margin: auto;
+            }
+
+            h1 {
+              text-align: center;
+            }
+
+            .bottom-checkbox {
+              margin-right: 5%;
+              display: inline;
+            }
+
+            .checkbox-class {
+              margin-right: 3px;
+            }
+
+            .node-edit {
+              position: relative;
+              font-size: 12px;
+              border: none;
+              background-color: rgba(1,1,1,0);
+            }
+
+            .node-edit:focus {
+              background-color: #ddd;
+            }
+
+            #option {
+              margin-left: 5px;
+            }
+
+            #freakingGraph {
+              border: solid 2px black;
+              /*position: relative;*/
+            }
+
+            .container {
+              margin: 0!important;
+              padding-right: 0!important;
+              max-width: 1200px!important;
+            }
+            .col-8 {
+              padding: 0px 4px 0px 2px!important;
+            }
+            .col-4 {
+              padding-right: 0px!important;
+            }
+            @media (max-width: 576px) {
+              form label {
+                font-size: 10px;
+              }
+            }
+
+
+            @media (max-width: 768px) {
+              form label {
+                font-size: 0.8rem;
+              }
+            }
+
+
+            @media (max-width: 992px) {
+              form label {
+                font-size: 1rem;
+              }
+            }
+
+            @media (max-width: 1200px) {
+              form label {
+                font-size: 1rem;
+              }
+            }
+
+            @media (min-width: 1201px) {
+              form label {
+                font-size: 1.4rem;
+              }
+            }
+
+        </style>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        </head>
+        <body>
 
 
 
-  <main>
+        <main>
 
-    <div class="container">
+          <div class="container">
 
-        <div class="row">
-          <div class="watermark" style="z-index: 1010; background-color: #FFF; width: 100%">
-            <h3>Retentioneering</h3>
-          </div>
-          <div class="col-8">
+              <div class="row">
+                <div class="watermark" style="z-index: 1010; background-color: #FFF; width: 100%">
+                  <h3>Retentioneering</h3>
+                </div>
+                <div class="col-8">
 
-            <div id="freakingGraph" style="z-index: 1000">
-              <!-- graph will be appended here -->
-            <svg viewBox="0,0,800,800"><g transform="translate(30.390971021270634,30.39097102127061) scale(0.9240225724468235)"><g><path class="link bad_target" stroke-width="1.1578139891675772" id="link_0" d="M310.4649471007242,535.2610415584231A2727.129999962896,2727.129999962896 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="4.7144749994188615" id="link_1" d="M310.4649471007242,535.2610415584231A2613.3279995968182,2613.3279995968182 0 0,1 242.3744659423828,65.01458792829203"></path><path class="link nice_target" stroke-width="1" id="link_2" d="M310.4649471007242,535.2610415584231A1915.474649613778,1915.474649613778 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="3.734163974057974" id="link_3" d="M310.4649471007242,535.2610415584231A1376.6421502679955,1376.6421502679955 0 0,1 124.31919263781776,702.5904580671097"></path><path class="link suit" stroke-width="3.6011064878309584" id="link_4" d="M310.4649471007242,535.2610415584231A1703.8607786082462,1703.8607786082462 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link suit" stroke-width="2.1172040261279896" id="link_5" d="M310.4649471007242,535.2610415584231A92.04899296859675,92.04899296859675 0 0,1 154.0599017002886,594.8213948077209"></path><path class="link suit" stroke-width="3.933424765801157" id="link_6" d="M242.3744659423828,65.01458792829203A2613.3279995968182,2613.3279995968182 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="1.7211929612496804" id="link_7" d="M242.3744659423828,65.01458792829203A4557.601060041541,4557.601060041541 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="3.52811548385597" id="link_8" d="M242.3744659423828,65.01458792829203A1521.112126971987,1521.112126971987 0 0,1 518.2382812338806,84.70773315429688"></path><path class="link suit" stroke-width="2.483367814221623" id="link_9" d="M242.3744659423828,65.01458792829203A31.428399524650803,31.428399524650803 0 0,1 193.6327019150785,35.18991958549134"></path><path class="link nice_target" stroke-width="1" id="link_10" d="M242.3744659423828,65.01458792829203A3778.2321245372295,3778.2321245372295 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="2.0902391966340454" id="link_11" d="M242.3744659423828,65.01458792829203A1522.2337987826704,1522.2337987826704 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link suit" stroke-width="9.305283711848253" id="link_12" d="M242.3744659423828,65.01458792829203A1822.097932780687,1822.097932780687 0 0,1 569.931640625,15.419076804311032"></path><path class="link suit" stroke-width="8.351007694274623" id="link_13" d="M242.3744659423828,65.01458792829203A1240.1829944581586,1240.1829944581586 0 0,1 361.16921362452763,256.6720000393967"></path><path class="link bad_target" stroke-width="1" id="link_14" d="M518.2382812338806,84.70773315429688A3656.32077153947,3656.32077153947 0 0,1 779.533935546875,695.9887390136719"></path><path class="link bad_target" stroke-width="1.2961714591227134" id="link_15" d="M193.6327019150785,35.18991958549134A4857.267121921583,4857.267121921583 0 0,1 779.533935546875,695.9887390136719"></path><path class="link nice_target" stroke-width="1" id="link_16" d="M193.6327019150785,35.18991958549134A3854.2594146139395,3854.2594146139395 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="2.5200957716357886" id="link_17" d="M124.31919263781776,702.5904580671097A1376.6421502679955,1376.6421502679955 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="2.145935516864641" id="link_18" d="M124.31919263781776,702.5904580671097A3603.8640021649317,3603.8640021649317 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="3.850763616076617" id="link_19" d="M124.31919263781776,702.5904580671097A3690.4460706464693,3690.4460706464693 0 0,1 193.6327019150785,35.18991958549134"></path><path class="link nice_target" stroke-width="4.542086054998954" id="link_20" d="M124.31919263781776,702.5904580671097A63.02222563146652,63.02222563146652 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="5.804969897022245" id="link_21" d="M103.72025086557397,304.5485534667969A1703.8607786082462,1703.8607786082462 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="2.889885864385504" id="link_22" d="M103.72025086557397,304.5485534667969A4295.459701442972,4295.459701442972 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="3.2398707547827703" id="link_23" d="M103.72025086557397,304.5485534667969A1522.2337987826704,1522.2337987826704 0 0,1 242.3744659423828,65.01458792829203"></path><path class="link nice_target" stroke-width="1" id="link_24" d="M103.72025086557397,304.5485534667969A2296.7140847334726,2296.7140847334726 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="5.76284897370929" id="link_25" d="M103.72025086557397,304.5485534667969A2192.160040953767,2192.160040953767 0 0,1 124.31919263781776,702.5904580671097"></path><path class="link bad_target" stroke-width="1" id="link_26" d="M569.931640625,15.419076804311032A3916.6340984929234,3916.6340984929234 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="2.528185220483972" id="link_27" d="M569.931640625,15.419076804311032A1822.097932780687,1822.097932780687 0 0,1 242.3744659423828,65.01458792829203"></path><path class="link nice_target" stroke-width="1" id="link_28" d="M569.931640625,15.419076804311032A4913.074182867692,4913.074182867692 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="1.8784258118505779" id="link_29" d="M569.931640625,15.419076804311032A3017.2346039130416,3017.2346039130416 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link bad_target" stroke-width="1" id="link_30" d="M632.0853875667516,487.0542347248974A1406.481324746703,1406.481324746703 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="4.325995490364722" id="link_31" d="M361.16921362452763,256.6720000393967A1557.410991074852,1557.410991074852 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="1" id="link_32" d="M361.16921362452763,256.6720000393967A3336.5932011840573,3336.5932011840573 0 0,1 779.533935546875,695.9887390136719"></path><path class="link nice_target" stroke-width="1" id="link_33" d="M361.16921362452763,256.6720000393967A3160.1349724969705,3160.1349724969705 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="6.920755945047538" id="link_34" d="M361.16921362452763,256.6720000393967A1440.2454710954212,1440.2454710954212 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link bad_target" stroke-width="1" id="link_35" d="M154.0599017002886,594.8213948077209A3484.815792281952,3484.815792281952 0 0,1 779.533935546875,695.9887390136719"></path><path class="link nice_target" stroke-width="1" id="link_36" d="M154.0599017002886,594.8213948077209A101.92632412046375,101.92632412046375 0 0,1 10.080111503601074,711.4984741210938"></path></g><g><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_0" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_1" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_2" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_3" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_4" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_5" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_6" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_7" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_8" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_9" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_10" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_11" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_12" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_13" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_14" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_15" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_16" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_17" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_18" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_19" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_20" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_21" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_22" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_23" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_24" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_25" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_26" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_27" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_28" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_29" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_30" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_31" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_32" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_33" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_34" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_35" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_36" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_0" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_1" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_2" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_3" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_4" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_5" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_6" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_7" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_8" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_9" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_10" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_11" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_12" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_13" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_14" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_15" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_16" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_17" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_18" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_19" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_20" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_21" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_22" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_23" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_24" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_25" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_26" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_27" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_28" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_29" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_30" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_31" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_32" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_33" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_34" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_35" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_36" startOffset="65%">➤</textPath></text></g><g><text><textPath xlink:href="#link_0" style="text-anchor: middle;" startOffset="50%" id="node_text0">3.9%</textPath></text><text><textPath xlink:href="#link_1" style="text-anchor: middle;" startOffset="50%" id="node_text1">16%</textPath></text><text><textPath xlink:href="#link_2" style="text-anchor: middle;" startOffset="50%" id="node_text2">0.15%</textPath></text><text><textPath xlink:href="#link_3" style="text-anchor: middle;" startOffset="50%" id="node_text3">13%</textPath></text><text><textPath xlink:href="#link_4" style="text-anchor: middle;" startOffset="50%" id="node_text4">12%</textPath></text><text><textPath xlink:href="#link_5" style="text-anchor: middle;" startOffset="50%" id="node_text5">7.2%</textPath></text><text><textPath xlink:href="#link_6" style="text-anchor: middle;" startOffset="50%" id="node_text6">13%</textPath></text><text><textPath xlink:href="#link_7" style="text-anchor: middle;" startOffset="50%" id="node_text7">5.8%</textPath></text><text><textPath xlink:href="#link_8" style="text-anchor: middle;" startOffset="50%" id="node_text8">12%</textPath></text><text><textPath xlink:href="#link_9" style="text-anchor: middle;" startOffset="50%" id="node_text9">8.4%</textPath></text><text><textPath xlink:href="#link_10" style="text-anchor: middle;" startOffset="50%" id="node_text10">0.00095%</textPath></text><text><textPath xlink:href="#link_11" style="text-anchor: middle;" startOffset="50%" id="node_text11">7.1%</textPath></text><text><textPath xlink:href="#link_12" style="text-anchor: middle;" startOffset="50%" id="node_text12">32%</textPath></text><text><textPath xlink:href="#link_13" style="text-anchor: middle;" startOffset="50%" id="node_text13">28%</textPath></text><text><textPath xlink:href="#link_14" style="text-anchor: middle;" startOffset="50%" id="node_text14">0.38%</textPath></text><text><textPath xlink:href="#link_15" style="text-anchor: middle;" startOffset="50%" id="node_text15">4.4%</textPath></text><text><textPath xlink:href="#link_16" style="text-anchor: middle;" startOffset="50%" id="node_text16">0.0044%</textPath></text><text><textPath xlink:href="#link_17" style="text-anchor: middle;" startOffset="50%" id="node_text17">8.6%</textPath></text><text><textPath xlink:href="#link_18" style="text-anchor: middle;" startOffset="50%" id="node_text18">7.3%</textPath></text><text><textPath xlink:href="#link_19" style="text-anchor: middle;" startOffset="50%" id="node_text19">13%</textPath></text><text><textPath xlink:href="#link_20" style="text-anchor: middle;" startOffset="50%" id="node_text20">15%</textPath></text><text><textPath xlink:href="#link_21" style="text-anchor: middle;" startOffset="50%" id="node_text21">20%</textPath></text><text><textPath xlink:href="#link_22" style="text-anchor: middle;" startOffset="50%" id="node_text22">9.8%</textPath></text><text><textPath xlink:href="#link_23" style="text-anchor: middle;" startOffset="50%" id="node_text23">11%</textPath></text><text><textPath xlink:href="#link_24" style="text-anchor: middle;" startOffset="50%" id="node_text24">0.0082%</textPath></text><text><textPath xlink:href="#link_25" style="text-anchor: middle;" startOffset="50%" id="node_text25">20%</textPath></text><text><textPath xlink:href="#link_26" style="text-anchor: middle;" startOffset="50%" id="node_text26">2.1%</textPath></text><text><textPath xlink:href="#link_27" style="text-anchor: middle;" startOffset="50%" id="node_text27">8.6%</textPath></text><text><textPath xlink:href="#link_28" style="text-anchor: middle;" startOffset="50%" id="node_text28">0.0013%</textPath></text><text><textPath xlink:href="#link_29" style="text-anchor: middle;" startOffset="50%" id="node_text29">6.4%</textPath></text><text><textPath xlink:href="#link_30" style="text-anchor: middle;" startOffset="50%" id="node_text30">0.035%</textPath></text><text><textPath xlink:href="#link_31" style="text-anchor: middle;" startOffset="50%" id="node_text31">15%</textPath></text><text><textPath xlink:href="#link_32" style="text-anchor: middle;" startOffset="50%" id="node_text32">0.042%</textPath></text><text><textPath xlink:href="#link_33" style="text-anchor: middle;" startOffset="50%" id="node_text33">0.00063%</textPath></text><text><textPath xlink:href="#link_34" style="text-anchor: middle;" startOffset="50%" id="node_text34">23%</textPath></text><text><textPath xlink:href="#link_35" style="text-anchor: middle;" startOffset="50%" id="node_text35">0.2%</textPath></text><text><textPath xlink:href="#link_36" style="text-anchor: middle;" startOffset="50%" id="node_text36">2.8%</textPath></text></g><g><circle class="circle suit_node" r="9.926316224481361" cx="310.4649471007242" cy="535.2610415584231" style="cursor: default;"></circle><circle class="circle suit_node" r="8.072960575254154" cx="361.16921362452763" cy="256.6720000393967" style="cursor: default;"></circle><circle class="circle suit_node" r="9.923010166129432" cx="124.31919263781776" cy="702.5904580671097" style="cursor: default;"></circle><circle class="circle suit_node" r="4.476382345648401" cx="154.0599017002886" cy="594.8213948077209" style="cursor: default;"></circle><circle class="circle suit_node" r="7.557422101000083" cx="193.6327019150785" cy="35.18991958549134" style="cursor: default;"></circle><circle class="circle suit_node" r="4.866703859823126" cx="632.0853875667516" cy="487.0542347248974" style="cursor: default;"></circle><circle class="circle suit_node" r="17.122365484750805" cx="242.3744659423828" cy="65.01458792829203" style="cursor: default;"></circle><circle class="circle suit_node" r="5.78961071162906" cx="518.2382812338806" cy="84.70773315429688" style="cursor: default;"></circle><circle class="circle suit_node" r="12.457930407471693" cx="103.72025086557397" cy="304.5485534667969" style="cursor: default;"></circle><circle class="circle bad_node" r="8.820956277378295" cx="779.533935546875" cy="695.9887390136719" style="cursor: default;"></circle><circle class="circle suit_node" r="8.707723778824697" cx="569.931640625" cy="15.419076804311032" style="cursor: default;"></circle><circle class="circle nice_node" r="5.204438383337466" cx="10.080111503601074" cy="711.4984741210938" style="cursor: default;"></circle></g><g><text x="310.4649471007242" y="535.2610415584231" id="node-name2" class="node-name">create_account_view</text><text x="361.16921362452763" y="256.6720000393967" id="node-name3" class="node-name">signup_click</text><text x="124.31919263781776" y="702.5904580671097" id="node-name4" class="node-name">payment_view</text><text x="154.0599017002886" y="594.8213948077209" id="node-name5" class="node-name">signup_success</text><text x="193.6327019150785" y="35.18991958549134" id="node-name7" class="node-name">open_browse_page</text><text x="632.0853875667516" y="487.0542347248974" id="node-name8" class="node-name">signout_page</text><text x="242.3744659423828" y="65.01458792829203" id="node-name9" class="node-name">landing_page_view</text><text x="518.2382812338806" y="84.70773315429688" id="node-name10" class="node-name">landing_sports_view</text><text x="103.72025086557397" y="304.5485534667969" id="node-name11" class="node-name">plan_picker_view</text><text x="779.533935546875" y="695.9887390136719" id="node-name12" class="node-name">final_exit</text><text x="569.931640625" y="15.419076804311032" id="node-name13" class="node-name">signin_page</text><text x="10.080111503601074" y="711.4984741210938" id="node-name14" class="node-name">payment</text></g></g></svg></div>
-          </div>
-          <div class="col-4" style="z-index: 1010; background-color: #FFF">
-            <form>
-              <div id="check-boxes">
+                  <div id="freakingGraph" style="z-index: 1000">
+                    <!-- graph will be appended here -->
+                  <svg viewBox="0,0,800,800"><g transform="translate(30.390971021270634,30.39097102127061) scale(0.9240225724468235)"><g><path class="link bad_target" stroke-width="1.1578139891675772" id="link_0" d="M310.4649471007242,535.2610415584231A2727.129999962896,2727.129999962896 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="4.7144749994188615" id="link_1" d="M310.4649471007242,535.2610415584231A2613.3279995968182,2613.3279995968182 0 0,1 242.3744659423828,65.01458792829203"></path><path class="link nice_target" stroke-width="1" id="link_2" d="M310.4649471007242,535.2610415584231A1915.474649613778,1915.474649613778 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="3.734163974057974" id="link_3" d="M310.4649471007242,535.2610415584231A1376.6421502679955,1376.6421502679955 0 0,1 124.31919263781776,702.5904580671097"></path><path class="link suit" stroke-width="3.6011064878309584" id="link_4" d="M310.4649471007242,535.2610415584231A1703.8607786082462,1703.8607786082462 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link suit" stroke-width="2.1172040261279896" id="link_5" d="M310.4649471007242,535.2610415584231A92.04899296859675,92.04899296859675 0 0,1 154.0599017002886,594.8213948077209"></path><path class="link suit" stroke-width="3.933424765801157" id="link_6" d="M242.3744659423828,65.01458792829203A2613.3279995968182,2613.3279995968182 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="1.7211929612496804" id="link_7" d="M242.3744659423828,65.01458792829203A4557.601060041541,4557.601060041541 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="3.52811548385597" id="link_8" d="M242.3744659423828,65.01458792829203A1521.112126971987,1521.112126971987 0 0,1 518.2382812338806,84.70773315429688"></path><path class="link suit" stroke-width="2.483367814221623" id="link_9" d="M242.3744659423828,65.01458792829203A31.428399524650803,31.428399524650803 0 0,1 193.6327019150785,35.18991958549134"></path><path class="link nice_target" stroke-width="1" id="link_10" d="M242.3744659423828,65.01458792829203A3778.2321245372295,3778.2321245372295 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="2.0902391966340454" id="link_11" d="M242.3744659423828,65.01458792829203A1522.2337987826704,1522.2337987826704 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link suit" stroke-width="9.305283711848253" id="link_12" d="M242.3744659423828,65.01458792829203A1822.097932780687,1822.097932780687 0 0,1 569.931640625,15.419076804311032"></path><path class="link suit" stroke-width="8.351007694274623" id="link_13" d="M242.3744659423828,65.01458792829203A1240.1829944581586,1240.1829944581586 0 0,1 361.16921362452763,256.6720000393967"></path><path class="link bad_target" stroke-width="1" id="link_14" d="M518.2382812338806,84.70773315429688A3656.32077153947,3656.32077153947 0 0,1 779.533935546875,695.9887390136719"></path><path class="link bad_target" stroke-width="1.2961714591227134" id="link_15" d="M193.6327019150785,35.18991958549134A4857.267121921583,4857.267121921583 0 0,1 779.533935546875,695.9887390136719"></path><path class="link nice_target" stroke-width="1" id="link_16" d="M193.6327019150785,35.18991958549134A3854.2594146139395,3854.2594146139395 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="2.5200957716357886" id="link_17" d="M124.31919263781776,702.5904580671097A1376.6421502679955,1376.6421502679955 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="2.145935516864641" id="link_18" d="M124.31919263781776,702.5904580671097A3603.8640021649317,3603.8640021649317 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="3.850763616076617" id="link_19" d="M124.31919263781776,702.5904580671097A3690.4460706464693,3690.4460706464693 0 0,1 193.6327019150785,35.18991958549134"></path><path class="link nice_target" stroke-width="4.542086054998954" id="link_20" d="M124.31919263781776,702.5904580671097A63.02222563146652,63.02222563146652 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="5.804969897022245" id="link_21" d="M103.72025086557397,304.5485534667969A1703.8607786082462,1703.8607786082462 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="2.889885864385504" id="link_22" d="M103.72025086557397,304.5485534667969A4295.459701442972,4295.459701442972 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="3.2398707547827703" id="link_23" d="M103.72025086557397,304.5485534667969A1522.2337987826704,1522.2337987826704 0 0,1 242.3744659423828,65.01458792829203"></path><path class="link nice_target" stroke-width="1" id="link_24" d="M103.72025086557397,304.5485534667969A2296.7140847334726,2296.7140847334726 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="5.76284897370929" id="link_25" d="M103.72025086557397,304.5485534667969A2192.160040953767,2192.160040953767 0 0,1 124.31919263781776,702.5904580671097"></path><path class="link bad_target" stroke-width="1" id="link_26" d="M569.931640625,15.419076804311032A3916.6340984929234,3916.6340984929234 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="2.528185220483972" id="link_27" d="M569.931640625,15.419076804311032A1822.097932780687,1822.097932780687 0 0,1 242.3744659423828,65.01458792829203"></path><path class="link nice_target" stroke-width="1" id="link_28" d="M569.931640625,15.419076804311032A4913.074182867692,4913.074182867692 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="1.8784258118505779" id="link_29" d="M569.931640625,15.419076804311032A3017.2346039130416,3017.2346039130416 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link bad_target" stroke-width="1" id="link_30" d="M632.0853875667516,487.0542347248974A1406.481324746703,1406.481324746703 0 0,1 779.533935546875,695.9887390136719"></path><path class="link suit" stroke-width="4.325995490364722" id="link_31" d="M361.16921362452763,256.6720000393967A1557.410991074852,1557.410991074852 0 0,1 310.4649471007242,535.2610415584231"></path><path class="link bad_target" stroke-width="1" id="link_32" d="M361.16921362452763,256.6720000393967A3336.5932011840573,3336.5932011840573 0 0,1 779.533935546875,695.9887390136719"></path><path class="link nice_target" stroke-width="1" id="link_33" d="M361.16921362452763,256.6720000393967A3160.1349724969705,3160.1349724969705 0 0,1 10.080111503601074,711.4984741210938"></path><path class="link suit" stroke-width="6.920755945047538" id="link_34" d="M361.16921362452763,256.6720000393967A1440.2454710954212,1440.2454710954212 0 0,1 103.72025086557397,304.5485534667969"></path><path class="link bad_target" stroke-width="1" id="link_35" d="M154.0599017002886,594.8213948077209A3484.815792281952,3484.815792281952 0 0,1 779.533935546875,695.9887390136719"></path><path class="link nice_target" stroke-width="1" id="link_36" d="M154.0599017002886,594.8213948077209A101.92632412046375,101.92632412046375 0 0,1 10.080111503601074,711.4984741210938"></path></g><g><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_0" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_1" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_2" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_3" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_4" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_5" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_6" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_7" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_8" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_9" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_10" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_11" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_12" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_13" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_14" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_15" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_16" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_17" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_18" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_19" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_20" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_21" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_22" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_23" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_24" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_25" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_26" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_27" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_28" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_29" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_30" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_31" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_32" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_33" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_34" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_35" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_36" startOffset="35%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_0" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_1" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_2" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_3" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_4" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_5" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_6" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_7" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_8" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_9" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_10" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_11" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_12" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_13" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_14" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_15" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_16" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_17" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_18" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_19" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_20" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_21" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_22" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_23" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_24" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_25" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_26" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_27" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_28" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_29" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_30" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_31" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_32" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_33" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_34" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_35" startOffset="65%">➤</textPath></text><text style="font-size: 13px;" dy="4.2px"><textPath xlink:href="#link_36" startOffset="65%">➤</textPath></text></g><g><text><textPath xlink:href="#link_0" style="text-anchor: middle;" startOffset="50%" id="node_text0">3.9%</textPath></text><text><textPath xlink:href="#link_1" style="text-anchor: middle;" startOffset="50%" id="node_text1">16%</textPath></text><text><textPath xlink:href="#link_2" style="text-anchor: middle;" startOffset="50%" id="node_text2">0.15%</textPath></text><text><textPath xlink:href="#link_3" style="text-anchor: middle;" startOffset="50%" id="node_text3">13%</textPath></text><text><textPath xlink:href="#link_4" style="text-anchor: middle;" startOffset="50%" id="node_text4">12%</textPath></text><text><textPath xlink:href="#link_5" style="text-anchor: middle;" startOffset="50%" id="node_text5">7.2%</textPath></text><text><textPath xlink:href="#link_6" style="text-anchor: middle;" startOffset="50%" id="node_text6">13%</textPath></text><text><textPath xlink:href="#link_7" style="text-anchor: middle;" startOffset="50%" id="node_text7">5.8%</textPath></text><text><textPath xlink:href="#link_8" style="text-anchor: middle;" startOffset="50%" id="node_text8">12%</textPath></text><text><textPath xlink:href="#link_9" style="text-anchor: middle;" startOffset="50%" id="node_text9">8.4%</textPath></text><text><textPath xlink:href="#link_10" style="text-anchor: middle;" startOffset="50%" id="node_text10">0.00095%</textPath></text><text><textPath xlink:href="#link_11" style="text-anchor: middle;" startOffset="50%" id="node_text11">7.1%</textPath></text><text><textPath xlink:href="#link_12" style="text-anchor: middle;" startOffset="50%" id="node_text12">32%</textPath></text><text><textPath xlink:href="#link_13" style="text-anchor: middle;" startOffset="50%" id="node_text13">28%</textPath></text><text><textPath xlink:href="#link_14" style="text-anchor: middle;" startOffset="50%" id="node_text14">0.38%</textPath></text><text><textPath xlink:href="#link_15" style="text-anchor: middle;" startOffset="50%" id="node_text15">4.4%</textPath></text><text><textPath xlink:href="#link_16" style="text-anchor: middle;" startOffset="50%" id="node_text16">0.0044%</textPath></text><text><textPath xlink:href="#link_17" style="text-anchor: middle;" startOffset="50%" id="node_text17">8.6%</textPath></text><text><textPath xlink:href="#link_18" style="text-anchor: middle;" startOffset="50%" id="node_text18">7.3%</textPath></text><text><textPath xlink:href="#link_19" style="text-anchor: middle;" startOffset="50%" id="node_text19">13%</textPath></text><text><textPath xlink:href="#link_20" style="text-anchor: middle;" startOffset="50%" id="node_text20">15%</textPath></text><text><textPath xlink:href="#link_21" style="text-anchor: middle;" startOffset="50%" id="node_text21">20%</textPath></text><text><textPath xlink:href="#link_22" style="text-anchor: middle;" startOffset="50%" id="node_text22">9.8%</textPath></text><text><textPath xlink:href="#link_23" style="text-anchor: middle;" startOffset="50%" id="node_text23">11%</textPath></text><text><textPath xlink:href="#link_24" style="text-anchor: middle;" startOffset="50%" id="node_text24">0.0082%</textPath></text><text><textPath xlink:href="#link_25" style="text-anchor: middle;" startOffset="50%" id="node_text25">20%</textPath></text><text><textPath xlink:href="#link_26" style="text-anchor: middle;" startOffset="50%" id="node_text26">2.1%</textPath></text><text><textPath xlink:href="#link_27" style="text-anchor: middle;" startOffset="50%" id="node_text27">8.6%</textPath></text><text><textPath xlink:href="#link_28" style="text-anchor: middle;" startOffset="50%" id="node_text28">0.0013%</textPath></text><text><textPath xlink:href="#link_29" style="text-anchor: middle;" startOffset="50%" id="node_text29">6.4%</textPath></text><text><textPath xlink:href="#link_30" style="text-anchor: middle;" startOffset="50%" id="node_text30">0.035%</textPath></text><text><textPath xlink:href="#link_31" style="text-anchor: middle;" startOffset="50%" id="node_text31">15%</textPath></text><text><textPath xlink:href="#link_32" style="text-anchor: middle;" startOffset="50%" id="node_text32">0.042%</textPath></text><text><textPath xlink:href="#link_33" style="text-anchor: middle;" startOffset="50%" id="node_text33">0.00063%</textPath></text><text><textPath xlink:href="#link_34" style="text-anchor: middle;" startOffset="50%" id="node_text34">23%</textPath></text><text><textPath xlink:href="#link_35" style="text-anchor: middle;" startOffset="50%" id="node_text35">0.2%</textPath></text><text><textPath xlink:href="#link_36" style="text-anchor: middle;" startOffset="50%" id="node_text36">2.8%</textPath></text></g><g><circle class="circle suit_node" r="9.926316224481361" cx="310.4649471007242" cy="535.2610415584231" style="cursor: default;"></circle><circle class="circle suit_node" r="8.072960575254154" cx="361.16921362452763" cy="256.6720000393967" style="cursor: default;"></circle><circle class="circle suit_node" r="9.923010166129432" cx="124.31919263781776" cy="702.5904580671097" style="cursor: default;"></circle><circle class="circle suit_node" r="4.476382345648401" cx="154.0599017002886" cy="594.8213948077209" style="cursor: default;"></circle><circle class="circle suit_node" r="7.557422101000083" cx="193.6327019150785" cy="35.18991958549134" style="cursor: default;"></circle><circle class="circle suit_node" r="4.866703859823126" cx="632.0853875667516" cy="487.0542347248974" style="cursor: default;"></circle><circle class="circle suit_node" r="17.122365484750805" cx="242.3744659423828" cy="65.01458792829203" style="cursor: default;"></circle><circle class="circle suit_node" r="5.78961071162906" cx="518.2382812338806" cy="84.70773315429688" style="cursor: default;"></circle><circle class="circle suit_node" r="12.457930407471693" cx="103.72025086557397" cy="304.5485534667969" style="cursor: default;"></circle><circle class="circle bad_node" r="8.820956277378295" cx="779.533935546875" cy="695.9887390136719" style="cursor: default;"></circle><circle class="circle suit_node" r="8.707723778824697" cx="569.931640625" cy="15.419076804311032" style="cursor: default;"></circle><circle class="circle nice_node" r="5.204438383337466" cx="10.080111503601074" cy="711.4984741210938" style="cursor: default;"></circle></g><g><text x="310.4649471007242" y="535.2610415584231" id="node-name2" class="node-name">create_account_view</text><text x="361.16921362452763" y="256.6720000393967" id="node-name3" class="node-name">signup_click</text><text x="124.31919263781776" y="702.5904580671097" id="node-name4" class="node-name">payment_view</text><text x="154.0599017002886" y="594.8213948077209" id="node-name5" class="node-name">signup_success</text><text x="193.6327019150785" y="35.18991958549134" id="node-name7" class="node-name">open_browse_page</text><text x="632.0853875667516" y="487.0542347248974" id="node-name8" class="node-name">signout_page</text><text x="242.3744659423828" y="65.01458792829203" id="node-name9" class="node-name">landing_page_view</text><text x="518.2382812338806" y="84.70773315429688" id="node-name10" class="node-name">landing_sports_view</text><text x="103.72025086557397" y="304.5485534667969" id="node-name11" class="node-name">plan_picker_view</text><text x="779.533935546875" y="695.9887390136719" id="node-name12" class="node-name">final_exit</text><text x="569.931640625" y="15.419076804311032" id="node-name13" class="node-name">signin_page</text><text x="10.080111503601074" y="711.4984741210938" id="node-name14" class="node-name">payment</text></g></g></svg></div>
+                </div>
+                <div class="col-4" style="z-index: 1010; background-color: #FFF">
+                  <form>
+                    <div id="check-boxes">
 
-              <div id="#checkdiv0"><input type="checkbox" id="checkbox0" class="checkbox-class node-checkbox"><input id="name-input0" type="text" size="15"></div><div id="#checkdiv1"><input type="checkbox" id="checkbox1" class="checkbox-class node-checkbox"><input id="name-input1" type="text" size="23"></div><div id="#checkdiv2"><input type="checkbox" id="checkbox2" class="checkbox-class node-checkbox"><input id="name-input2" type="text" size="22"></div><div id="#checkdiv3"><input type="checkbox" id="checkbox3" class="checkbox-class node-checkbox"><input id="name-input3" type="text" size="15"></div><div id="#checkdiv4"><input type="checkbox" id="checkbox4" class="checkbox-class node-checkbox"><input id="name-input4" type="text" size="15"></div><div id="#checkdiv5"><input type="checkbox" id="checkbox5" class="checkbox-class node-checkbox"><input id="name-input5" type="text" size="17"></div><div id="#checkdiv6"><input type="checkbox" id="checkbox6" class="checkbox-class node-checkbox"><input id="name-input6" type="text" size="24"></div><div id="#checkdiv7"><input type="checkbox" id="checkbox7" class="checkbox-class node-checkbox"><input id="name-input7" type="text" size="19"></div><div id="#checkdiv8"><input type="checkbox" id="checkbox8" class="checkbox-class node-checkbox"><input id="name-input8" type="text" size="15"></div><div id="#checkdiv9"><input type="checkbox" id="checkbox9" class="checkbox-class node-checkbox"><input id="name-input9" type="text" size="20"></div><div id="#checkdiv10"><input type="checkbox" id="checkbox10" class="checkbox-class node-checkbox"><input id="name-input10" type="text" size="22"></div><div id="#checkdiv11"><input type="checkbox" id="checkbox11" class="checkbox-class node-checkbox"><input id="name-input11" type="text" size="19"></div><div id="#checkdiv12"><input type="checkbox" id="checkbox12" class="checkbox-class node-checkbox"><input id="name-input12" type="text" size="13"></div><div id="#checkdiv13"><input type="checkbox" id="checkbox13" class="checkbox-class node-checkbox"><input id="name-input13" type="text" size="14"></div><div id="#checkdiv14"><input type="checkbox" id="checkbox14" class="checkbox-class node-checkbox"><input id="name-input14" type="text" size="10"></div></div>
-              <br>
-              <input name="submit" value="Update nodes" style="width: 80%;" type="button" onclick="changeNodes()">
+                    <div id="#checkdiv0"><input type="checkbox" id="checkbox0" class="checkbox-class node-checkbox"><input id="name-input0" type="text" size="15"></div><div id="#checkdiv1"><input type="checkbox" id="checkbox1" class="checkbox-class node-checkbox"><input id="name-input1" type="text" size="23"></div><div id="#checkdiv2"><input type="checkbox" id="checkbox2" class="checkbox-class node-checkbox"><input id="name-input2" type="text" size="22"></div><div id="#checkdiv3"><input type="checkbox" id="checkbox3" class="checkbox-class node-checkbox"><input id="name-input3" type="text" size="15"></div><div id="#checkdiv4"><input type="checkbox" id="checkbox4" class="checkbox-class node-checkbox"><input id="name-input4" type="text" size="15"></div><div id="#checkdiv5"><input type="checkbox" id="checkbox5" class="checkbox-class node-checkbox"><input id="name-input5" type="text" size="17"></div><div id="#checkdiv6"><input type="checkbox" id="checkbox6" class="checkbox-class node-checkbox"><input id="name-input6" type="text" size="24"></div><div id="#checkdiv7"><input type="checkbox" id="checkbox7" class="checkbox-class node-checkbox"><input id="name-input7" type="text" size="19"></div><div id="#checkdiv8"><input type="checkbox" id="checkbox8" class="checkbox-class node-checkbox"><input id="name-input8" type="text" size="15"></div><div id="#checkdiv9"><input type="checkbox" id="checkbox9" class="checkbox-class node-checkbox"><input id="name-input9" type="text" size="20"></div><div id="#checkdiv10"><input type="checkbox" id="checkbox10" class="checkbox-class node-checkbox"><input id="name-input10" type="text" size="22"></div><div id="#checkdiv11"><input type="checkbox" id="checkbox11" class="checkbox-class node-checkbox"><input id="name-input11" type="text" size="19"></div><div id="#checkdiv12"><input type="checkbox" id="checkbox12" class="checkbox-class node-checkbox"><input id="name-input12" type="text" size="13"></div><div id="#checkdiv13"><input type="checkbox" id="checkbox13" class="checkbox-class node-checkbox"><input id="name-input13" type="text" size="14"></div><div id="#checkdiv14"><input type="checkbox" id="checkbox14" class="checkbox-class node-checkbox"><input id="name-input14" type="text" size="10"></div></div>
+                    <br>
+                    <input name="submit" value="Update nodes" style="width: 80%;" type="button" onclick="changeNodes()">
 
-            </form>
+                  </form>
 
-            <br>
-            <br>
-            <div style="z-index: 1010; background-color: #FFF">
-              <h6>Nodes Threshold</h6>
-              <input id="threshold-node-range" name="threshold-node" type="range" min="0" max="1" step="0.01" value="0.05" oninput="updateNodeThresholdText(this.value)" onchange="updateNodeThresholdText(this.value)">
-              <label id="threshold-node-text">0.05</label>
-              <input type="button" value="Set threshold" onclick="setNodeThreshold()">
+                  <br>
+                  <br>
+                  <div style="z-index: 1010; background-color: #FFF">
+                    <h6>Nodes Threshold</h6>
+                    <input id="threshold-node-range" name="threshold-node" type="range" min="0" max="1" step="0.01" value="0.05" oninput="updateNodeThresholdText(this.value)" onchange="updateNodeThresholdText(this.value)">
+                    <label id="threshold-node-text">0.05</label>
+                    <input type="button" value="Set threshold" onclick="setNodeThreshold()">
+                  </div>
+                  <br>
+                  <div>
+                    <h6>Links Threshold</h6>
+                    <input id="threshold-link-range" name="threshold" type="range" min="0" max="1" step="0.01" value="0.08836411818033892" oninput="updateLinkThresholdText(this.value*0.6790086432769953)" onchange="updateLinkThresholdText(this.value*0.6790086432769953)">
+                    <label id="threshold-link-text">0.06</label>
+                    <input type="button" value="Set threshold" onclick="setLinkThreshold()">
+                  </div>
+                </div>
+
+
+
+
+                <div class="col-12" style="z-index: 1010; background-color: #FFF">
+
+                  <div class="weight-checkbox bottom-checkbox">
+                    <input type="checkbox" class="checkbox checkbox-class" checked="" value="weighted" id="show-weights"><label> Show weights </label>
+                  </div>
+
+                  <div class="percent-checkbox bottom-checkbox">
+                    <input type="checkbox" class="checkbox checkbox-class" checked="" id="show-percents"><label> Percents </label>
+                  </div>
+
+                  <div class="bottom-checkbox">
+                    <input type="checkbox" class="checkbox checkbox-class" checked="" id="show-names" onchange="changeNamesVisibility(this.checked)"><label> Show nodes names</label>
+                  </div>
+
+                  <div class="bottom-checkbox">
+                    <input type="checkbox" class="checkbox checkbox-class" id="block-targets" onchange="setLinkThreshold ()"><label> Show all edges for targets </label>
+                  </div>
+                  <div id="option">
+                    <input name="downloadButton" type="button" value="download" onclick="downloadLayout()">
+                  </div>
+                </div>
             </div>
-            <br>
-            <div>
-              <h6>Links Threshold</h6>
-              <input id="threshold-link-range" name="threshold" type="range" min="0" max="1" step="0.01" value="0.08836411818033892" oninput="updateLinkThresholdText(this.value*0.6790086432769953)" onchange="updateLinkThresholdText(this.value*0.6790086432769953)">
-              <label id="threshold-link-text">0.06</label>
-              <input type="button" value="Set threshold" onclick="setLinkThreshold()">
-            </div>
-          </div>
 
 
 
 
-          <div class="col-12" style="z-index: 1010; background-color: #FFF">
+        </div></main>
 
-            <div class="weight-checkbox bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" checked="" value="weighted" id="show-weights"><label> Show weights </label>
-            </div>
+        <script src="https://api.retentioneering.com/files/d3.v4.min.js"></script>
 
-            <div class="percent-checkbox bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" checked="" id="show-percents"><label> Percents </label>
-            </div>
+        <script type="text/javascript">
 
-            <div class="bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" checked="" id="show-names" onchange="changeNamesVisibility(this.checked)"><label> Show nodes names</label>
-            </div>
+          updateLinkThresholdText(0.08836411818033892*0.6790086432769953);
+          initialize([{"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, {"index": 1, "name": "landing_devices_view", "x": 634.9091874626624, "y": 112.4557452202211, "type": "suit_node", "degree": 5.336887346061658}, {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, {"index": 8, "name": "signout_page", "x": 632.0853875667516, "y": 487.0542347248974, "type": "suit_node", "degree": 4.866703859823126}, {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}], {"payment": "nice_target", "final_exit": "bad_target"}, [{"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.05789069945837885, "weight_text": 0.03930828529759011, "type": "bad_target"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 0.23572374997094306, "weight_text": 0.1600584636559357, "type": "suit"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.0022269229875171437, "weight_text": 0.0015120999564363687, "type": "nice_target"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "weight": 0.1867081987028987, "weight_text": 0.1267764806899469, "type": "suit"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.18005532439154792, "weight_text": 0.12225912152990423, "type": "suit"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, "weight": 0.10586020130639949, "weight_text": 0.07187999166608793, "type": "suit"}, {"source": {"index": 1, "name": "landing_devices_view", "x": 634.9091874626624, "y": 112.4557452202211, "type": "suit_node", "degree": 5.336887346061658}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.00927962063274367, "weight_text": 0.0063009426159644924, "type": "bad_target"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.19667123829005786, "weight_text": 0.13354147068293884, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.08605964806248402, "weight_text": 0.05843524487180297, "type": "bad_target"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, "weight": 0.17640577419279851, "weight_text": 0.11978104540088011, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "weight": 0.12416839071108114, "weight_text": 0.08431141051461907, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 1.3947325600316139e-05, "weight_text": 9.470354633213165e-06, "type": "nice_target"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.10451195983170226, "weight_text": 0.07096452405154398, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "weight": 0.4652641855924126, "weight_text": 0.31591840342448024, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "weight": 0.4175503847137311, "weight_text": 0.283520320224258, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.2469420488621307, "weight_text": 0.16767578556591684, "type": "suit"}, {"source": {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.005537088263325507, "weight_text": 0.0037597307893856265, "type": "bad_target"}, {"source": {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, "target": {"index": 1, "name": "landing_devices_view", "x": 634.9091874626624, "y": 112.4557452202211, "type": "suit_node", "degree": 5.336887346061658}, "weight": 0.13978474627490178, "weight_text": 0.09491505091894008, "type": "suit"}, {"source": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.06480857295613567, "weight_text": 0.04400558119566384, "type": "bad_target"}, {"source": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 6.508751946814199e-05, "weight_text": 4.4194988288328104e-05, "type": "nice_target"}, {"source": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.17660568585973638, "weight_text": 0.11991678715062283, "type": "suit"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.12600478858178943, "weight_text": 0.08555834054132547, "type": "suit"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.10729677584323205, "weight_text": 0.07285543819330888, "type": "bad_target"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "weight": 0.19253818080383084, "weight_text": 0.13073508892663, "type": "suit"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.2271043027499477, "weight_text": 0.15420578449260997, "type": "nice_target"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.19397010623212999, "weight_text": 0.13170737866897322, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.29024849485111226, "weight_text": 0.1970812367020437, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.1444942932192752, "weight_text": 0.09811287400008839, "type": "bad_target"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 0.16199353773913852, "weight_text": 0.10999501227989318, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.00012087682186940654, "weight_text": 8.207640682118077e-05, "type": "nice_target"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "weight": 0.2881424486854645, "weight_text": 0.1956512131524285, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.21487249819847043, "weight_text": 0.14590028347928202, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.030256398335619144, "weight_text": 0.020544355984317093, "type": "bad_target"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 0.1264092610241986, "weight_text": 0.08583298082568866, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 1.859643413375485e-05, "weight_text": 1.2627139510950887e-05, "type": "nice_target"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.09392129059252889, "weight_text": 0.06377336810005746, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "weight": 0.2299170134126781, "weight_text": 0.15611563934364128, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.16840000929821705, "weight_text": 0.11434506184141575, "type": "suit"}, {"source": {"index": 8, "name": "signout_page", "x": 632.0853875667516, "y": 487.0542347248974, "type": "suit_node", "degree": 4.866703859823126}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.0005160510472116971, "weight_text": 0.0003504031214288871, "type": "bad_target"}, {"source": {"index": 8, "name": "signout_page", "x": 632.0853875667516, "y": 487.0542347248974, "type": "suit_node", "degree": 4.866703859823126}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.12739487203328761, "weight_text": 0.08650221921976906, "type": "suit"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.21629977451823612, "weight_text": 0.1468694164367475, "type": "suit"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.0006229805434807875, "weight_text": 0.0004230091736168547, "type": "bad_target"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 9.298217066877425e-06, "weight_text": 6.3135697554754435e-06, "type": "nice_target"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.3460377972523769, "weight_text": 0.23496265523489637, "type": "suit"}, {"source": {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.002966131244333899, "weight_text": 0.0020140287519966665, "type": "bad_target"}, {"source": {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.041400311490271735, "weight_text": 0.02811116933625441, "type": "nice_target"}, {"source": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.1553871545131221, "weight_text": 0.10550922096862787, "type": "bad_target"}, {"source": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 1.3947325600316139e-05, "weight_text": 9.470354633213165e-06, "type": "nice_target"}, {"source": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.3980148306562216, "weight_text": 0.2702555101680041, "type": "suit"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.4170110881238522, "weight_text": 0.2831541331784404, "type": "bad_target"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 1.0, "weight_text": 0.6790086432769953, "type": "suit"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.0002510518608056905, "weight_text": 0.00017046638339783697, "type": "nice_target"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.26480857295613563, "weight_text": 0.17980730985106289, "type": "suit"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "weight": 0.380087868151282, "weight_text": 0.25808294767944745, "type": "suit"}]);
 
-            <div class="bottom-checkbox">
-              <input type="checkbox" class="checkbox checkbox-class" id="block-targets" onchange="setLinkThreshold ()"><label> Show all edges for targets </label>
-            </div>
-            <div id="option">
-              <input name="downloadButton" type="button" value="download" onclick="downloadLayout()">
-            </div>
-          </div>
-      </div>
+          if (!1) {
+            $('.percent-checkbox').hide();
+          }
+
+        </script>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
 
 
-
-
-  </div></main>
-
-  <script src="https://api.retentioneering.com/files/d3.v4.min.js"></script>
-
-  <script type="text/javascript">
-
-    updateLinkThresholdText(0.08836411818033892*0.6790086432769953);
-    initialize([{"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, {"index": 1, "name": "landing_devices_view", "x": 634.9091874626624, "y": 112.4557452202211, "type": "suit_node", "degree": 5.336887346061658}, {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, {"index": 8, "name": "signout_page", "x": 632.0853875667516, "y": 487.0542347248974, "type": "suit_node", "degree": 4.866703859823126}, {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}], {"payment": "nice_target", "final_exit": "bad_target"}, [{"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.05789069945837885, "weight_text": 0.03930828529759011, "type": "bad_target"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 0.23572374997094306, "weight_text": 0.1600584636559357, "type": "suit"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.0022269229875171437, "weight_text": 0.0015120999564363687, "type": "nice_target"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "weight": 0.1867081987028987, "weight_text": 0.1267764806899469, "type": "suit"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.18005532439154792, "weight_text": 0.12225912152990423, "type": "suit"}, {"source": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "target": {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, "weight": 0.10586020130639949, "weight_text": 0.07187999166608793, "type": "suit"}, {"source": {"index": 1, "name": "landing_devices_view", "x": 634.9091874626624, "y": 112.4557452202211, "type": "suit_node", "degree": 5.336887346061658}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.00927962063274367, "weight_text": 0.0063009426159644924, "type": "bad_target"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.19667123829005786, "weight_text": 0.13354147068293884, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.08605964806248402, "weight_text": 0.05843524487180297, "type": "bad_target"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, "weight": 0.17640577419279851, "weight_text": 0.11978104540088011, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "weight": 0.12416839071108114, "weight_text": 0.08431141051461907, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 1.3947325600316139e-05, "weight_text": 9.470354633213165e-06, "type": "nice_target"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.10451195983170226, "weight_text": 0.07096452405154398, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "weight": 0.4652641855924126, "weight_text": 0.31591840342448024, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "weight": 0.4175503847137311, "weight_text": 0.283520320224258, "type": "suit"}, {"source": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.2469420488621307, "weight_text": 0.16767578556591684, "type": "suit"}, {"source": {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.005537088263325507, "weight_text": 0.0037597307893856265, "type": "bad_target"}, {"source": {"index": 10, "name": "landing_sports_view", "x": 518.2382812338806, "y": 84.70773315429688, "type": "suit_node", "degree": 5.78961071162906}, "target": {"index": 1, "name": "landing_devices_view", "x": 634.9091874626624, "y": 112.4557452202211, "type": "suit_node", "degree": 5.336887346061658}, "weight": 0.13978474627490178, "weight_text": 0.09491505091894008, "type": "suit"}, {"source": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.06480857295613567, "weight_text": 0.04400558119566384, "type": "bad_target"}, {"source": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 6.508751946814199e-05, "weight_text": 4.4194988288328104e-05, "type": "nice_target"}, {"source": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.17660568585973638, "weight_text": 0.11991678715062283, "type": "suit"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.12600478858178943, "weight_text": 0.08555834054132547, "type": "suit"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.10729677584323205, "weight_text": 0.07285543819330888, "type": "bad_target"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 7, "name": "open_browse_page", "x": 193.6327019150785, "y": 35.18991958549134, "type": "suit_node", "degree": 7.557422101000083}, "weight": 0.19253818080383084, "weight_text": 0.13073508892663, "type": "suit"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.2271043027499477, "weight_text": 0.15420578449260997, "type": "nice_target"}, {"source": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.19397010623212999, "weight_text": 0.13170737866897322, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.29024849485111226, "weight_text": 0.1970812367020437, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.1444942932192752, "weight_text": 0.09811287400008839, "type": "bad_target"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 0.16199353773913852, "weight_text": 0.10999501227989318, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.00012087682186940654, "weight_text": 8.207640682118077e-05, "type": "nice_target"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 4, "name": "payment_view", "x": 124.31919263781776, "y": 702.5904580671097, "type": "suit_node", "degree": 9.923010166129432}, "weight": 0.2881424486854645, "weight_text": 0.1956512131524285, "type": "suit"}, {"source": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.21487249819847043, "weight_text": 0.14590028347928202, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.030256398335619144, "weight_text": 0.020544355984317093, "type": "bad_target"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 0.1264092610241986, "weight_text": 0.08583298082568866, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 1.859643413375485e-05, "weight_text": 1.2627139510950887e-05, "type": "nice_target"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.09392129059252889, "weight_text": 0.06377336810005746, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "weight": 0.2299170134126781, "weight_text": 0.15611563934364128, "type": "suit"}, {"source": {"index": 13, "name": "signin_page", "x": 569.931640625, "y": 15.419076804311032, "type": "suit_node", "degree": 8.707723778824697}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.16840000929821705, "weight_text": 0.11434506184141575, "type": "suit"}, {"source": {"index": 8, "name": "signout_page", "x": 632.0853875667516, "y": 487.0542347248974, "type": "suit_node", "degree": 4.866703859823126}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.0005160510472116971, "weight_text": 0.0003504031214288871, "type": "bad_target"}, {"source": {"index": 8, "name": "signout_page", "x": 632.0853875667516, "y": 487.0542347248974, "type": "suit_node", "degree": 4.866703859823126}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.12739487203328761, "weight_text": 0.08650221921976906, "type": "suit"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 2, "name": "create_account_view", "x": 310.4649471007242, "y": 535.2610415584231, "type": "suit_node", "degree": 9.926316224481361}, "weight": 0.21629977451823612, "weight_text": 0.1468694164367475, "type": "suit"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.0006229805434807875, "weight_text": 0.0004230091736168547, "type": "bad_target"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 9.298217066877425e-06, "weight_text": 6.3135697554754435e-06, "type": "nice_target"}, {"source": {"index": 3, "name": "signup_click", "x": 361.16921362452763, "y": 256.6720000393967, "type": "suit_node", "degree": 8.072960575254154}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.3460377972523769, "weight_text": 0.23496265523489637, "type": "suit"}, {"source": {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.002966131244333899, "weight_text": 0.0020140287519966665, "type": "bad_target"}, {"source": {"index": 5, "name": "signup_success", "x": 154.0599017002886, "y": 594.8213948077209, "type": "suit_node", "degree": 4.476382345648401}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.041400311490271735, "weight_text": 0.02811116933625441, "type": "nice_target"}, {"source": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.1553871545131221, "weight_text": 0.10550922096862787, "type": "bad_target"}, {"source": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 1.3947325600316139e-05, "weight_text": 9.470354633213165e-06, "type": "nice_target"}, {"source": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "target": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "weight": 0.3980148306562216, "weight_text": 0.2702555101680041, "type": "suit"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 12, "name": "final_exit", "x": 779.533935546875, "y": 695.9887390136719, "type": "bad_node", "degree": 8.820956277378295}, "weight": 0.4170110881238522, "weight_text": 0.2831541331784404, "type": "bad_target"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 9, "name": "landing_page_view", "x": 242.3744659423828, "y": 65.01458792829203, "type": "suit_node", "degree": 17.122365484750805}, "weight": 1.0, "weight_text": 0.6790086432769953, "type": "suit"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 14, "name": "payment", "x": 10.080111503601074, "y": 711.4984741210938, "type": "nice_node", "degree": 5.204438383337466}, "weight": 0.0002510518608056905, "weight_text": 0.00017046638339783697, "type": "nice_target"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 11, "name": "plan_picker_view", "x": 103.72025086557397, "y": 304.5485534667969, "type": "suit_node", "degree": 12.457930407471693}, "weight": 0.26480857295613563, "weight_text": 0.17980730985106289, "type": "suit"}, {"source": {"index": 0, "name": "startup_view", "x": 366.7319427330958, "y": 62.0462946289374, "type": "suit_node", "degree": 34}, "target": {"index": 6, "name": "standard_landing_page", "x": 670.6778760286944, "y": 102.75188559945377, "type": "suit_node", "degree": 20.97547317960162}, "weight": 0.380087868151282, "weight_text": 0.25808294767944745, "type": "suit"}]);
-
-    if (!1) {
-      $('.percent-checkbox').hide();
-    }
-
-  </script>
-
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
-
-
-</body>
+    </body>
+  </html>
+<iframe>        
 
 </html>
